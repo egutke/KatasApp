@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kata Randomizer</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; text-align: center; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h1 { color: #ff4757; font-size: 1.8rem; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+        .display-box { background: #2f3542; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; margin-bottom: 25px; padding: 15px; border: 2px solid #57606f; }
+        .kata-type { font-size: 0.9rem; color: #ffa502; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+        .kata-name { font-size: 1.6rem; font-weight: bold; color: #ffffff; }
+        button { border: none; padding: 15px 30px; font-size: 1.1rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; text-transform: uppercase; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .btn-next { background: #ff4757; color: white; margin-bottom: 15px; }
+        .btn-next:hover { background: #ff6b81; transform: translateY(-2px); }
+        .btn-next:active { transform: translateY(0); }
+        .btn-reset { background: #57606f; color: #f1f2f6; font-size: 0.9rem; padding: 10px 20px; }
+        .btn-reset:hover { background: #747d8c; transform: translateY(-1px); }
+        .btn-reset:active { transform: translateY(0); }
+        .stats { margin-top: 25px; font-size: 0.85rem; color: #a4b0be; text-align: left; background: #262626; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .stats div { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Kata Training Rotation</h1>
+    
+    <div class="display-box">
+        <div id="typeDisplay" class="kata-type">Click Start Below</div>
+        <div id="kataDisplay" class="kata-name">Ready?</div>
+    </div>
+
+    <button class="btn-next" onclick="getNextKata()">Next Kata</button>
+
+    <div class="stats">
+        <div id="nextType">Next up: Open Hand</div>
+        <div id="openRemaining">Open Hand remaining: 15/15</div>
+        <div id="weaponsRemaining">Weapons remaining: 13/13</div>
+        <div id="cycleStatus">Cycle status: Fresh Start</div>
+    </div>
+
+    <button class="btn-reset" onclick="resetApp()">Reset & Re-shuffle</button>
+</div>
+
+<script>
+const originalOpenHand = [
+    "ni ju sichi no kata", "kihon kata shodan", "kihon kata nidan", "kihon kata sandan", 
+    "kihon kata yandan", "zenshin kotai", "shihohai", "seisan", "nisheishi", 
+    "rho hai sho", "rho hai dai", "tenshin", "mugen", "bassai", "chinto"
+];
+
+const originalWeapons = {
+    nunchaku: ["nunchaku kihon kata", "nunchaku kihon kata shodan", "nunchaku yoshu"],
+    bo: ["bo kihon kata shodan", "bo kihon kata nidan", "bo kihon kata sandan", "bo shounnokon"],
+    sai: ["sai zenshin kotai", "sai shihohai", "sai rho hai sho", "sai rho hai dai", "sai mugen", "sai bassai"]
+};
+
+let openHandPool = [];
+let weaponsPool = { nunchaku: [], bo: [], sai: [] };
+let nextTypeNeeded = "open"; 
+let currentKataDisplay = "Ready?";
+let currentTypeDisplay = "Click Start Below";
+let currentStatusDisplay = "Fresh Start";
+
+function getTotalWeaponsCount() {
+    return weaponsPool.nunchaku.length + weaponsPool.bo.length + weaponsPool.sai.length;
+}
+
+function saveToStorage() {
+    localStorage.setItem('openHandPool', JSON.stringify(openHandPool));
+    localStorage.setItem('weaponsPool', JSON.stringify(weaponsPool));
+    localStorage.setItem('nextTypeNeeded', nextTypeNeeded);
+    localStorage.setItem('currentKataDisplay', currentKataDisplay);
+    localStorage.setItem('currentTypeDisplay', currentTypeDisplay);
+    localStorage.setItem('currentStatusDisplay', currentStatusDisplay);
+}
+
+function loadFromStorage() {
+    const savedOpen = localStorage.getItem('openHandPool');
+    const savedWeapons = localStorage.getItem('weaponsPool');
+    
+    if (savedOpen && savedWeapons) {
+        openHandPool = JSON.parse(savedOpen);
+        weaponsPool = JSON.parse(savedWeapons);
+        nextTypeNeeded = localStorage.getItem('nextTypeNeeded') || "open";
+        currentKataDisplay = localStorage.getItem('currentKataDisplay') || "Ready?";
+        currentTypeDisplay = localStorage.getItem('currentTypeDisplay') || "Click Start Below";
+        currentStatusDisplay = localStorage.getItem('currentStatusDisplay') || "In Progress";
+        
+        updateUI(currentKataDisplay, currentTypeDisplay, currentStatusDisplay);
+    } else {
+        resetApp();
+    }
+}
+
+function getNextKata() {
+    const totalWeapons = getTotalWeaponsCount();
+    
+    if (openHandPool.length === 0 && totalWeapons === 0) {
+        resetApp();
+        currentStatusDisplay = "All lists completed & reset!";
+        updateUI("Ready?", "Click Start Below", currentStatusDisplay);
+        saveToStorage();
+        return;
+    }
+
+    let selectedKata = "";
+    let currentType = "";
+
+    if (nextTypeNeeded === "open" && openHandPool.length === 0) nextTypeNeeded = "weapon";
+    if (nextTypeNeeded === "weapon" && totalWeapons === 0) nextTypeNeeded = "open";
+
+    if (nextTypeNeeded === "open") {
+        let index = Math.floor(Math.random() * openHandPool.length);
+        selectedKata = openHandPool.splice(index, 1)[0];
+        currentType = "Open Hand";
+        nextTypeNeeded = "weapon"; 
+    } else {
+        let availableWeaponTypes = [];
+        if (weaponsPool.nunchaku.length > 0) availableWeaponTypes.push("nunchaku");
+        if (weaponsPool.bo.length > 0) availableWeaponTypes.push("bo");
+        if (weaponsPool.sai.length > 0) availableWeaponTypes.push("sai");
+
+        let randomWeaponType = availableWeaponTypes[Math.floor(Math.random() * availableWeaponTypes.length)];
+        let targetPool = weaponsPool[randomWeaponType];
+        
+        let index = Math.floor(Math.random() * targetPool.length);
+        selectedKata = targetPool.splice(index, 1)[0];
+        
+        currentType = randomWeaponType.charAt(0).toUpperCase() + randomWeaponType.slice(1);
+        nextTypeNeeded = "open";
+    }
+
+    currentKataDisplay = selectedKata;
+    currentTypeDisplay = currentType;
+    currentStatusDisplay = "In Progress";
+
+    updateUI(selectedKata, currentType, currentStatusDisplay);
+    saveToStorage();
+}
+
+function resetApp() {
+    openHandPool = [...originalOpenHand];
+    weaponsPool = {
+        nunchaku: [...originalWeapons.nunchaku],
+        bo: [...originalWeapons.bo],
+        sai: [...originalWeapons.sai]
+    };
+    nextTypeNeeded = "open";
+    currentKataDisplay = "Ready?";
+    currentTypeDisplay = "Click Start Below";
+    currentStatusDisplay = "Fresh Start";
+    
+    updateUI(currentKataDisplay, currentTypeDisplay, currentStatusDisplay);
+    saveToStorage();
+}
+
+function updateUI(kataText, typeText, statusText) {
+    const totalWeaponsCount = getTotalWeaponsCount();
+    const originalWeaponsCount = originalWeapons.nunchaku.length + originalWeapons.bo.length + originalWeapons.sai.length;
+
+    document.getElementById("kataDisplay").innerText = kataText;
+    document.getElementById("typeDisplay").innerText = typeText;
+    
+    if (openHandPool.length === 0 && totalWeaponsCount === 0) {
+        document.getElementById("nextType").innerText = "Next up: Full Reset";
+    } else {
+        document.getElementById("nextType").innerText = `Next up: ${nextTypeNeeded === 'open' ? 'Open Hand' : 'Weapon'}`;
+    }
+    
+    document.getElementById("openRemaining").innerText = `Open Hand remaining: ${openHandPool.length}/${originalOpenHand.length}`;
+    document.getElementById("weaponsRemaining").innerText = `Weapons remaining: ${totalWeaponsCount}/${originalWeaponsCount}`;
+    document.getElementById("cycleStatus").innerText = `Cycle status: ${statusText}`;
+}
+
+window.onload = loadFromStorage;
+</script>
+
+</body>
+</html>
