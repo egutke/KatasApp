@@ -3,14 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kata Randomizer</title>
+    <title>Kata Randomizer & Sequencer</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; text-align: center; padding: 20px; }
         .container { max-width: 500px; margin: auto; background: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h1 { color: #ff4757; font-size: 1.8rem; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+        h1 { color: #ff4757; font-size: 1.8rem; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .config-section { background: #262626; padding: 15px; border-radius: 8px; margin-bottom: 25px; text-align: left; border: 1px solid #333; }
+        .config-row { margin-bottom: 12px; }
+        .config-row:last-child { margin-bottom: 0; }
+        
+        label { font-size: 0.85rem; color: #a4b0be; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; font-weight: bold; }
+        select { background: #2f3542; color: white; border: 2px solid #57606f; padding: 10px; font-size: 1rem; border-radius: 6px; width: 100%; cursor: pointer; font-weight: bold; box-sizing: border-box; }
+        
         .display-box { background: #2f3542; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; margin-bottom: 25px; padding: 15px; border: 2px solid #57606f; }
         .kata-type { font-size: 0.9rem; color: #ffa502; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
         .kata-name { font-size: 1.6rem; font-weight: bold; color: #ffffff; }
+        
         button { border: none; padding: 15px 30px; font-size: 1.1rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; text-transform: uppercase; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .btn-next { background: #ff4757; color: white; margin-bottom: 15px; }
         .btn-next:hover { background: #ff6b81; transform: translateY(-2px); }
@@ -18,14 +27,53 @@
         .btn-reset { background: #57606f; color: #f1f2f6; font-size: 0.9rem; padding: 10px 20px; }
         .btn-reset:hover { background: #747d8c; transform: translateY(-1px); }
         .btn-reset:active { transform: translateY(0); }
-        .stats { margin-top: 25px; font-size: 0.85rem; color: #a4b0be; text-align: left; background: #262626; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
-        .stats div { margin-bottom: 5px; }
+        
+        .stats { font-size: 0.85rem; color: #a4b0be; text-align: left; background: #262626; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .stats div { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .stats div:last-child { border-bottom: none; padding-bottom: 0; }
+        .highlight { color: #ffffff; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Kata Training Rotation</h1>
+    <h1>Kata Training Focus</h1>
+    
+    <div class="config-section">
+        <div class="config-row">
+            <label for="rankSelect">Belt Rank Focus</label>
+            <select id="rankSelect" onchange="handleConfigChange()">
+                <option value="10">10th KYU White Belt</option>
+                <option value="8">8th KYU Yellow Belt</option>
+                <option value="7">7th KYU Yellow Belt</option>
+                <option value="6">6th KYU Blue Belt</option>
+                <option value="5">5th KYU Blue Belt</option>
+                <option value="4">4th KYU Green Belt</option>
+                <option value="3">3rd KYU Green Belt</option>
+                <option value="2">2nd KYU Brown Belt</option>
+                <option value="1">1st KYU Brown Belt</option>
+                <option value="b1">1st Degree Black Belt</option>
+                <option value="b2">2nd Degree Black Belt</option>
+                <option value="b3">3rd Degree Black Belt</option>
+            </select>
+        </div>
+        
+        <div class="config-row">
+            <label for="scopeSelect">Curriculum Scope</label>
+            <select id="scopeSelect" onchange="handleConfigChange()">
+                <option value="cumulative">Cumulative (Rank & Below)</option>
+                <option value="single">Current Rank Only</option>
+            </select>
+        </div>
+
+        <div class="config-row">
+            <label for="orderSelect">Training Order</label>
+            <select id="orderSelect" onchange="handleConfigChange()">
+                <option value="random">Alternating & Shuffled</option>
+                <option value="sequential">Sequential (Open -> Nunchaku -> Bo -> Sai -> Tonfa)</option>
+            </select>
+        </div>
+    </div>
     
     <div class="display-box">
         <div id="typeDisplay" class="kata-type">Click Start Below</div>
@@ -35,59 +83,172 @@
     <button class="btn-next" onclick="getNextKata()">Next Kata</button>
 
     <div class="stats">
-        <div id="nextType">Next up: Open Hand</div>
-        <div id="openRemaining">Open Hand remaining: 15/15</div>
-        <div id="weaponsRemaining">Weapons remaining: 13/13</div>
-        <div id="cycleStatus">Cycle status: Fresh Start</div>
+        <div>Current Target: <span id="rankDisplay" class="highlight">-</span></div>
+        <div>Order Mode: <span id="orderDisplay" class="highlight">-</span></div>
+        <div>Open Hand remaining: <span id="openRemaining" class="highlight">0/0</span></div>
+        <div>Weapons remaining: <span id="weaponsRemaining" class="highlight">0/0</span></div>
+        <div>Cycle status: <span id="cycleStatus" class="highlight">Fresh Start</span></div>
     </div>
 
     <button class="btn-reset" onclick="resetApp()">Reset & Re-shuffle</button>
 </div>
 
 <script>
-const originalOpenHand = [
-    "ni ju sichi no kata", "kihon kata shodan", "kihon kata nidan", "kihon kata sandan", 
-    "kihon kata yandan", "zenshin kotai", "shihohai", "seisan", "nisheishi", 
-    "rho hai sho", "rho hai dai", "tenshin", "mugen", "bassai", "chinto"
+const curriculum = [
+    {
+        id: "10",
+        name: "10th KYU White Belt",
+        openHand: ["Ni-Ju Shichi No Kata", "Kihon Kata Shodan"],
+        weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] }
+    },
+    {
+        id: "8",
+        name: "8th KYU Yellow Belt",
+        openHand: ["Kihon Kata Nidan", "Kihon Kata Sandan"],
+        weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] }
+    },
+    {
+        id: "7",
+        name: "7th KYU Yellow Belt",
+        openHand: ["Kihon Kata Yondan", "Zen Shin Kotai"],
+        weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] }
+    },
+    {
+        id: "6",
+        name: "6th KYU Blue Belt",
+        openHand: ["Shihohai"],
+        weapons: { nunchaku: ["Nunchaku Kihon Kata"], bo: [], sai: [], tonfa: [] }
+    },
+    {
+        id: "5",
+        name: "5th KYU Blue Belt",
+        openHand: ["Seisan"],
+        weapons: { nunchaku: ["Nunchaku Kihon Kata Shodan"], bo: [], sai: [], tonfa: [] }
+    },
+    {
+        id: "4",
+        name: "4th KYU Green Belt",
+        openHand: [],
+        weapons: { nunchaku: [], bo: ["Bo Kihon Kata Shodan"], sai: [], tonfa: [] }
+    },
+    {
+        id: "3",
+        name: "3rd KYU Green Belt",
+        openHand: ["Niseishi"],
+        weapons: { nunchaku: [], bo: ["Bo Kihon Kata Nidan"], sai: ["Sai Zen Shin Kotai"], tonfa: [] }
+    },
+    {
+        id: "2",
+        name: "2nd KYU Brown Belt",
+        openHand: ["Rho Hai Sho"],
+        weapons: { nunchaku: [], bo: ["Bo Kihon Kata Sandan"], sai: ["Sai Shiho Hai"], tonfa: [] }
+    },
+    {
+        id: "1",
+        name: "1st KYU Brown Belt",
+        openHand: [],
+        weapons: { nunchaku: ["Nunchaku Yoshu"], bo: [], sai: ["Sai Rho Hai Sho"], tonfa: [] }
+    },
+    {
+        id: "b1",
+        name: "1st Degree Black Belt",
+        openHand: ["Rho Hai Dai", "Tenshin", "Mugen", "Bassai", "Chinto"],
+        weapons: { nunchaku: [], bo: ["Bo Shounnokon"], sai: ["Sai Rho Hai Dai", "Sai Mugen", "Sai Bassai"], tonfa: [] }
+    },
+    {
+        id: "b2",
+        name: "2nd Degree Black Belt",
+        openHand: ["Sochin"],
+        weapons: { nunchaku: ["Nunchaku Yoshu Dai"], bo: [], sai: ["Yosei No Sai"], tonfa: ["Tonfa Tensho"] }
+    },
+    {
+        id: "b3",
+        name: "3rd Degree Black Belt",
+        openHand: ["San Shi Ryu"],
+        weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] }
+    }
 ];
 
-const originalWeapons = {
-    nunchaku: ["nunchaku kihon kata", "nunchaku kihon kata shodan", "nunchaku yoshu"],
-    bo: ["bo kihon kata shodan", "bo kihon kata nidan", "bo kihon kata sandan", "bo shounnokon"],
-    sai: ["sai zenshin kotai", "sai shihohai", "sai rho hai sho", "sai rho hai dai", "sai mugen", "sai bassai"]
-};
+let totalOpenHandCount = 0;
+let totalWeaponsCount = 0;
 
 let openHandPool = [];
-let weaponsPool = { nunchaku: [], bo: [], sai: [] };
+let weaponsPool = { nunchaku: [], bo: [], sai: [], tonfa: [] };
+
 let nextTypeNeeded = "open"; 
 let currentKataDisplay = "Ready?";
 let currentTypeDisplay = "Click Start Below";
 let currentStatusDisplay = "Fresh Start";
 
-function getTotalWeaponsCount() {
-    return weaponsPool.nunchaku.length + weaponsPool.bo.length + weaponsPool.sai.length;
+function getUIValues() {
+    return {
+        rankId: document.getElementById("rankSelect").value,
+        scope: document.getElementById("scopeSelect").value,
+        order: document.getElementById("orderSelect").value
+    };
+}
+
+function getTotalWeaponsCount(pool) {
+    return pool.nunchaku.length + pool.bo.length + pool.sai.length + pool.tonfa.length;
+}
+
+// Dynamically gathers the target curriculum based on chosen rank and scope settings
+function compileTargetLists() {
+    const config = getUIValues();
+    let targetOpen = [];
+    let targetWeapons = { nunchaku: [], bo: [], sai: [], tonfa: [] };
+    
+    for (let rank of curriculum) {
+        if (config.scope === "single" && rank.id !== config.rankId) {
+            continue; // Skip ranks that aren't the selected one
+        }
+        
+        targetOpen = targetOpen.concat(rank.openHand);
+        targetWeapons.nunchaku = targetWeapons.nunchaku.concat(rank.weapons.nunchaku);
+        targetWeapons.bo = targetWeapons.bo.concat(rank.weapons.bo);
+        targetWeapons.sai = targetWeapons.sai.concat(rank.weapons.sai);
+        targetWeapons.tonfa = targetWeapons.tonfa.concat(rank.weapons.tonfa);
+        
+        if (config.scope === "cumulative" && rank.id === config.rankId) {
+            break; // Stop collecting once we hit the target cumulative rank
+        }
+    }
+    
+    return { open: targetOpen, weapons: targetWeapons };
 }
 
 function saveToStorage() {
-    localStorage.setItem('openHandPool', JSON.stringify(openHandPool));
-    localStorage.setItem('weaponsPool', JSON.stringify(weaponsPool));
-    localStorage.setItem('nextTypeNeeded', nextTypeNeeded);
-    localStorage.setItem('currentKataDisplay', currentKataDisplay);
-    localStorage.setItem('currentTypeDisplay', currentTypeDisplay);
-    localStorage.setItem('currentStatusDisplay', currentStatusDisplay);
+    const config = getUIValues();
+    localStorage.setItem('v2_rankId', config.rankId);
+    localStorage.setItem('v2_scope', config.scope);
+    localStorage.setItem('v2_order', config.order);
+    localStorage.setItem('v2_openHandPool', JSON.stringify(openHandPool));
+    localStorage.setItem('v2_weaponsPool', JSON.stringify(weaponsPool));
+    localStorage.setItem('v2_nextTypeNeeded', nextTypeNeeded);
+    localStorage.setItem('v2_currentKataDisplay', currentKataDisplay);
+    localStorage.setItem('v2_currentTypeDisplay', currentTypeDisplay);
+    localStorage.setItem('v2_currentStatusDisplay', currentStatusDisplay);
 }
 
 function loadFromStorage() {
-    const savedOpen = localStorage.getItem('openHandPool');
-    const savedWeapons = localStorage.getItem('weaponsPool');
+    if (localStorage.getItem('v2_rankId')) document.getElementById("rankSelect").value = localStorage.getItem('v2_rankId');
+    if (localStorage.getItem('v2_scope')) document.getElementById("scopeSelect").value = localStorage.getItem('v2_scope');
+    if (localStorage.getItem('v2_order')) document.getElementById("orderSelect").value = localStorage.getItem('v2_order');
+    
+    const masters = compileTargetLists();
+    totalOpenHandCount = masters.open.length;
+    totalWeaponsCount = getTotalWeaponsCount(masters.weapons);
+
+    const savedOpen = localStorage.getItem('v2_openHandPool');
+    const savedWeapons = localStorage.getItem('v2_weaponsPool');
     
     if (savedOpen && savedWeapons) {
         openHandPool = JSON.parse(savedOpen);
         weaponsPool = JSON.parse(savedWeapons);
-        nextTypeNeeded = localStorage.getItem('nextTypeNeeded') || "open";
-        currentKataDisplay = localStorage.getItem('currentKataDisplay') || "Ready?";
-        currentTypeDisplay = localStorage.getItem('currentTypeDisplay') || "Click Start Below";
-        currentStatusDisplay = localStorage.getItem('currentStatusDisplay') || "In Progress";
+        nextTypeNeeded = localStorage.getItem('v2_nextTypeNeeded') || "open";
+        currentKataDisplay = localStorage.getItem('v2_currentKataDisplay') || "Ready?";
+        currentTypeDisplay = localStorage.getItem('v2_currentTypeDisplay') || "Click Start Below";
+        currentStatusDisplay = localStorage.getItem('v2_currentStatusDisplay') || "In Progress";
         
         updateUI(currentKataDisplay, currentTypeDisplay, currentStatusDisplay);
     } else {
@@ -95,12 +256,20 @@ function loadFromStorage() {
     }
 }
 
+function handleConfigChange() {
+    const masters = compileTargetLists();
+    totalOpenHandCount = masters.open.length;
+    totalWeaponsCount = getTotalWeaponsCount(masters.weapons);
+    resetApp();
+}
+
 function getNextKata() {
-    const totalWeapons = getTotalWeaponsCount();
+    const weaponsLeft = getTotalWeaponsCount(weaponsPool);
+    const config = getUIValues();
     
-    if (openHandPool.length === 0 && totalWeapons === 0) {
+    if (openHandPool.length === 0 && weaponsLeft === 0) {
         resetApp();
-        currentStatusDisplay = "All lists completed & reset!";
+        currentStatusDisplay = "Session complete! List auto-reset.";
         updateUI("Ready?", "Click Start Below", currentStatusDisplay);
         saveToStorage();
         return;
@@ -109,28 +278,51 @@ function getNextKata() {
     let selectedKata = "";
     let currentType = "";
 
-    if (nextTypeNeeded === "open" && openHandPool.length === 0) nextTypeNeeded = "weapon";
-    if (nextTypeNeeded === "weapon" && totalWeapons === 0) nextTypeNeeded = "open";
+    // MODE 1: SEQUENTIAL EXTRACTION (Open -> Nunchaku -> Bo -> Sai -> Tonfa)
+    if (config.order === "sequential") {
+        if (openHandPool.length > 0) {
+            selectedKata = openHandPool.shift(); // Takes the very first item (lowest rank)
+            currentType = "Open Hand";
+        } else if (weaponsPool.nunchaku.length > 0) {
+            selectedKata = weaponsPool.nunchaku.shift();
+            currentType = "Nunchaku";
+        } else if (weaponsPool.bo.length > 0) {
+            selectedKata = weaponsPool.bo.shift();
+            currentType = "Bo";
+        } else if (weaponsPool.sai.length > 0) {
+            selectedKata = weaponsPool.sai.shift();
+            currentType = "Sai";
+        } else if (weaponsPool.tonfa.length > 0) {
+            selectedKata = weaponsPool.tonfa.shift();
+            currentType = "Tonfa";
+        }
+    } 
+    // MODE 2: ALTERNATING RANDOM EXTRACTION
+    else {
+        if (nextTypeNeeded === "open" && openHandPool.length === 0) nextTypeNeeded = "weapon";
+        if (nextTypeNeeded === "weapon" && weaponsLeft === 0) nextTypeNeeded = "open";
 
-    if (nextTypeNeeded === "open") {
-        let index = Math.floor(Math.random() * openHandPool.length);
-        selectedKata = openHandPool.splice(index, 1)[0];
-        currentType = "Open Hand";
-        nextTypeNeeded = "weapon"; 
-    } else {
-        let availableWeaponTypes = [];
-        if (weaponsPool.nunchaku.length > 0) availableWeaponTypes.push("nunchaku");
-        if (weaponsPool.bo.length > 0) availableWeaponTypes.push("bo");
-        if (weaponsPool.sai.length > 0) availableWeaponTypes.push("sai");
+        if (nextTypeNeeded === "open") {
+            let index = Math.floor(Math.random() * openHandPool.length);
+            selectedKata = openHandPool.splice(index, 1)[0];
+            currentType = "Open Hand";
+            nextTypeNeeded = "weapon"; 
+        } else {
+            let availableWeaponTypes = [];
+            if (weaponsPool.nunchaku.length > 0) availableWeaponTypes.push("nunchaku");
+            if (weaponsPool.bo.length > 0) availableWeaponTypes.push("bo");
+            if (weaponsPool.sai.length > 0) availableWeaponTypes.push("sai");
+            if (weaponsPool.tonfa.length > 0) availableWeaponTypes.push("tonfa");
 
-        let randomWeaponType = availableWeaponTypes[Math.floor(Math.random() * availableWeaponTypes.length)];
-        let targetPool = weaponsPool[randomWeaponType];
-        
-        let index = Math.floor(Math.random() * targetPool.length);
-        selectedKata = targetPool.splice(index, 1)[0];
-        
-        currentType = randomWeaponType.charAt(0).toUpperCase() + randomWeaponType.slice(1);
-        nextTypeNeeded = "open";
+            let randomWeaponType = availableWeaponTypes[Math.floor(Math.random() * availableWeaponTypes.length)];
+            let targetPool = weaponsPool[randomWeaponType];
+            
+            let index = Math.floor(Math.random() * targetPool.length);
+            selectedKata = targetPool.splice(index, 1)[0];
+            
+            currentType = randomWeaponType.charAt(0).toUpperCase() + randomWeaponType.slice(1);
+            nextTypeNeeded = "open";
+        }
     }
 
     currentKataDisplay = selectedKata;
@@ -142,12 +334,16 @@ function getNextKata() {
 }
 
 function resetApp() {
-    openHandPool = [...originalOpenHand];
+    const lists = compileTargetLists();
+    
+    openHandPool = [...lists.open];
     weaponsPool = {
-        nunchaku: [...originalWeapons.nunchaku],
-        bo: [...originalWeapons.bo],
-        sai: [...originalWeapons.sai]
+        nunchaku: [...lists.weapons.nunchaku],
+        bo: [...lists.weapons.bo],
+        sai: [...lists.weapons.sai],
+        tonfa: [...lists.weapons.tonfa]
     };
+    
     nextTypeNeeded = "open";
     currentKataDisplay = "Ready?";
     currentTypeDisplay = "Click Start Below";
@@ -158,21 +354,23 @@ function resetApp() {
 }
 
 function updateUI(kataText, typeText, statusText) {
-    const totalWeaponsCount = getTotalWeaponsCount();
-    const originalWeaponsCount = originalWeapons.nunchaku.length + originalWeapons.bo.length + originalWeapons.sai.length;
+    const weaponsLeft = getTotalWeaponsCount(weaponsPool);
+    const config = getUIValues();
+    
+    const rankMenu = document.getElementById("rankSelect");
+    const selectedRankName = rankMenu.options[rankMenu.selectedIndex].text;
+    const scopeLabel = config.scope === "single" ? " (Only)" : " (Cumulative)";
 
     document.getElementById("kataDisplay").innerText = kataText;
     document.getElementById("typeDisplay").innerText = typeText;
+    document.getElementById("rankDisplay").innerText = selectedRankName + scopeLabel;
     
-    if (openHandPool.length === 0 && totalWeaponsCount === 0) {
-        document.getElementById("nextType").innerText = "Next up: Full Reset";
-    } else {
-        document.getElementById("nextType").innerText = `Next up: ${nextTypeNeeded === 'open' ? 'Open Hand' : 'Weapon'}`;
-    }
+    const orderMenu = document.getElementById("orderSelect");
+    document.getElementById("orderDisplay").innerText = orderMenu.options[orderMenu.selectedIndex].text;
     
-    document.getElementById("openRemaining").innerText = `Open Hand remaining: ${openHandPool.length}/${originalOpenHand.length}`;
-    document.getElementById("weaponsRemaining").innerText = `Weapons remaining: ${totalWeaponsCount}/${originalWeaponsCount}`;
-    document.getElementById("cycleStatus").innerText = `Cycle status: ${statusText}`;
+    document.getElementById("openRemaining").innerText = `${openHandPool.length}/${totalOpenHandCount}`;
+    document.getElementById("weaponsRemaining").innerText = `${weaponsLeft}/${totalWeaponsCount}`;
+    document.getElementById("cycleStatus").innerText = statusText;
 }
 
 window.onload = loadFromStorage;
