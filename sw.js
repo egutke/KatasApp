@@ -6,11 +6,15 @@ const ASSETS_TO_CACHE = [
   './icon-512.png'
 ];
 
-// Install event: Cache the files
+// Install event: Cache the files individually to prevent total failure
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME).then(cache => {
+      // Loop through each file so one missing icon doesn't crash the whole app
+      ASSETS_TO_CACHE.forEach(file => {
+        cache.add(file).catch(err => console.error(`Failed to cache: ${file}`, err));
+      });
+    })
   );
   // Force the waiting service worker to become the active service worker
   self.skipWaiting();
