@@ -93,6 +93,13 @@
         .rating-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
         .btn-rate { background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); color: var(--text-main); padding: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; }
         .btn-rate:active { background-color: rgba(255,255,255,0.05); }
+        
+        /* New active state for selected rating */
+        .btn-rate.selected { 
+            background-color: rgba(255, 71, 87, 0.15); 
+            border-color: var(--accent); 
+            color: var(--text-main); 
+        }
 
         /* Forms & Toggles */
         .form-group { margin-bottom: 16px; }
@@ -154,10 +161,11 @@
         <div class="card" id="scoring-card" style="display: none;">
             <div class="card-title standalone" style="text-align: center;">Log Performance</div>
             <div class="rating-group">
-                <button class="btn-rate" onclick="logPerformance(1)">❌ Fix</button>
-                <button class="btn-rate" onclick="logPerformance(3)">⚠️ OK</button>
-                <button class="btn-rate" onclick="logPerformance(5)">💎 Sharp</button>
+                <button class="btn-rate" id="btn-rate-1" onclick="selectRating(1)">❌ Fix</button>
+                <button class="btn-rate" id="btn-rate-3" onclick="selectRating(3)">⚠️ OK</button>
+                <button class="btn-rate" id="btn-rate-5" onclick="selectRating(5)">💎 Sharp</button>
             </div>
+            <button class="btn" id="next-button" onclick="submitLogAndNext()" style="display: none; margin-top: 16px;">Next</button>
         </div>
 
         <button class="btn" id="roll-button" onclick="getNextKata()">Hajime!</button>
@@ -303,10 +311,14 @@ const DEFAULT_STATE = {
 let appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
 let totalOpenHandCount = 0;
 let totalWeaponsCount = 0;
+let pendingRating = null;
 
+// --- Core Initialization & Storage ---
 // --- Core Initialization & Storage ---
 function initApp() {
     const saved = localStorage.getItem('yoshukai_app_state');
+    let isFirstVisit = false; // Flag to track new users
+
     if (saved) {
         try {
             const parsed = JSON.parse(saved);
@@ -321,7 +333,12 @@ function initApp() {
             document.getElementById("scopeSelect").value = appState.settings.scope;
             document.getElementById("orderSelect").value = appState.settings.order;
 
-        } catch(e) { console.error("Storage error, resetting"); }
+        } catch(e) { 
+            console.error("Storage error, resetting"); 
+            isFirstVisit = true; // Corrupted data, treat as new
+        }
+    } else {
+        isFirstVisit = true; // No saved data, definitely new
     }
     
     // Evaluate availability and sync checkboxes
@@ -333,6 +350,11 @@ function initApp() {
         resetApp();
     } else {
         renderUI();
+    }
+
+    // Intercept the default view and route to Settings for new users
+    if (isFirstVisit) {
+        switchView('settings');
     }
 }
 
@@ -442,6 +464,7 @@ function getNextKata() {
         appState.uiState.status = "Session complete! Auto-reset.";
         appState.uiState.kata = "Ready?";
         appState.uiState.type = "Click Below to Begin";
+        document.getElementById('roll-button').innerText = "Hajime!"; // Reset text
         saveState();
         return;
     }
@@ -492,21 +515,40 @@ function getNextKata() {
     saveState();
 }
 
-function logPerformance(rating) {
+function selectRating(rating) {
+    pendingRating = rating;
+    
+    // Clear the selected class from all buttons
+    document.querySelectorAll('.btn-rate').forEach(btn => btn.classList.remove('selected'));
+    
+    // Add the selected class to the clicked button
+    document.getElementById(`btn-rate-${rating}`).classList.add('selected');
+    
+    // Reveal the Next button
+    document.getElementById('next-button').style.display = 'block';
+}
+
+function submitLogAndNext() {
+    if (!pendingRating) return; // Failsafe
+    
     const entry = {
         id: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
         kataName: appState.uiState.kata,
         type: appState.uiState.type,
-        rating: rating
+        rating: pendingRating
     };
     
     appState.history.unshift(entry); 
-    
-    document.getElementById('scoring-card').style.display = 'none';
-    document.getElementById('roll-button').style.display = 'block';
-    
     saveState();
+
+    // Reset the scoring UI state for the next round
+    pendingRating = null;
+    document.querySelectorAll('.btn-rate').forEach(btn => btn.classList.remove('selected'));
+    document.getElementById('next-button').style.display = 'none';
+    
+    // Trigger the next cycle immediately
+    getNextKata();
 }
 
 function resetApp() {
@@ -520,8 +562,14 @@ function resetApp() {
     appState.uiState = { nextTypeNeeded: "open", kata: "Ready?", type: "Click Below to Begin", status: "Fresh Start" };
     recalculateTotals();
     
+    // Reset Scoring UI
+    pendingRating = null;
+    document.querySelectorAll('.btn-rate').forEach(btn => btn.classList.remove('selected'));
+    document.getElementById('next-button').style.display = 'none';
+    
     document.getElementById('scoring-card').style.display = 'none';
     document.getElementById('roll-button').style.display = 'block';
+    document.getElementById('roll-button').innerText = "Hajime!"; // Reset text
     
     saveState();
 }
