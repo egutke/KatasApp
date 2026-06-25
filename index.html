@@ -145,11 +145,10 @@
         <p>Rotator & Progress Engine</p>
     </header>
 
-    <!-- CORE PANEL 1: TRAINING HUB -->
     <main id="view-train" class="view-panel active">
         <div class="card display-box">
             <div id="kataDisplay" class="kata-name">Ready?</div>
-            <span id="typeDisplay" class="kata-type">Click Start Below</span>
+            <span id="typeDisplay" class="kata-type">Click Below to Begin</span>
         </div>
         
         <div class="card" id="scoring-card" style="display: none;">
@@ -161,10 +160,9 @@
             </div>
         </div>
 
-        <button class="btn" id="roll-button" onclick="getNextKata()">Next Rotation</button>
+        <button class="btn" id="roll-button" onclick="getNextKata()">Hajime!</button>
     </main>
 
-    <!-- CORE PANEL 2: METRICS & HISTORY -->
     <section id="view-metrics" class="view-panel">
         <div class="card">
             <div class="card-title standalone">Live Tracking Parameters</div>
@@ -190,13 +188,12 @@
         <button class="btn btn-secondary" onclick="resetApp()">Force Hard Reset & Re-shuffle</button>
     </section>
 
-    <!-- CORE PANEL 3: SETTINGS & DATA ADMIN -->
     <section id="view-settings" class="view-panel">
         <div class="card">
             <div class="card-title standalone">Curriculum Scope</div>
             <div class="form-group">
                 <label class="dropdown-label" for="rankSelect">Current Belt Rank</label>
-                <select id="rankSelect" onchange="handleConfigChange()">
+                <select id="rankSelect" onchange="handleDropdownChange()">
                     <option value="10">10th KYU White Belt</option>
                     <option value="8">8th KYU Yellow Belt</option>
                     <option value="7">7th KYU Yellow Belt</option>
@@ -214,7 +211,7 @@
             
             <div class="form-group">
                 <label class="dropdown-label" for="scopeSelect">Rank Scope</label>
-                <select id="scopeSelect" onchange="handleConfigChange()">
+                <select id="scopeSelect" onchange="handleDropdownChange()">
                     <option value="cumulative">Cumulative (Rank & Below)</option>
                     <option value="single">Current Rank Only</option>
                 </select>
@@ -222,7 +219,7 @@
 
             <div class="form-group">
                 <label class="dropdown-label" for="orderSelect">Training Sequence</label>
-                <select id="orderSelect" onchange="handleConfigChange()">
+                <select id="orderSelect" onchange="handleDropdownChange()">
                     <option value="random">Alternating & Shuffled</option>
                     <option value="sequential">Sequential (Open -> Weapons)</option>
                 </select>
@@ -236,16 +233,16 @@
             </div>
             
             <div class="toggle-row">
-                <label>Nunchaku <input type="checkbox" id="wpn-nunchaku" onchange="handleConfigChange()"></label>
+                <label>Nunchaku <input type="checkbox" id="wpn-nunchaku" onchange="handleToggleChange('nunchaku')"></label>
             </div>
             <div class="toggle-row">
-                <label>Bo Staff <input type="checkbox" id="wpn-bo" onchange="handleConfigChange()"></label>
+                <label>Bo Staff <input type="checkbox" id="wpn-bo" onchange="handleToggleChange('bo')"></label>
             </div>
             <div class="toggle-row">
-                <label>Sai <input type="checkbox" id="wpn-sai" onchange="handleConfigChange()"></label>
+                <label>Sai <input type="checkbox" id="wpn-sai" onchange="handleToggleChange('sai')"></label>
             </div>
             <div class="toggle-row">
-                <label>Tonfa <input type="checkbox" id="wpn-tonfa" onchange="handleConfigChange()"></label>
+                <label>Tonfa <input type="checkbox" id="wpn-tonfa" onchange="handleToggleChange('tonfa')"></label>
             </div>
         </div>
 
@@ -260,7 +257,6 @@
     </section>
 </div>
 
-<!-- NAVIGATION LAYER -->
 <nav class="bottom-nav">
     <button class="nav-item active" id="nav-train" onclick="switchView('train')">
         <svg viewBox="0 0 24 24"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm1 10h3l-4-4-4 4h3v4h2v-4z"/></svg>
@@ -300,7 +296,7 @@ const DEFAULT_STATE = {
         weapons: { nunchaku: true, bo: true, sai: true, tonfa: true }
     },
     activePool: { openHand: [], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } },
-    uiState: { nextTypeNeeded: "open", kata: "Ready?", type: "Click Start Below", status: "Fresh Start" },
+    uiState: { nextTypeNeeded: "open", kata: "Ready?", type: "Click Below to Begin", status: "Fresh Start" },
     history: []
 };
 
@@ -324,24 +320,15 @@ function initApp() {
             document.getElementById("rankSelect").value = appState.settings.rankId;
             document.getElementById("scopeSelect").value = appState.settings.scope;
             document.getElementById("orderSelect").value = appState.settings.order;
-            
-            // Apply toggles before enforcing logic
-            document.getElementById("wpn-nunchaku").checked = appState.settings.weapons.nunchaku;
-            document.getElementById("wpn-bo").checked = appState.settings.weapons.bo;
-            document.getElementById("wpn-sai").checked = appState.settings.weapons.sai;
-            document.getElementById("wpn-tonfa").checked = appState.settings.weapons.tonfa;
 
         } catch(e) { console.error("Storage error, resetting"); }
-    } else {
-        document.getElementById("wpn-nunchaku").checked = appState.settings.weapons.nunchaku;
-        document.getElementById("wpn-bo").checked = appState.settings.weapons.bo;
-        document.getElementById("wpn-sai").checked = appState.settings.weapons.sai;
-        document.getElementById("wpn-tonfa").checked = appState.settings.weapons.tonfa;
     }
     
+    // Evaluate availability and sync checkboxes
     enforceWeaponAvailability();
     recalculateTotals();
     
+    // Auto-reset if needed, otherwise render current state
     if (appState.activePool.openHand.length === 0 && getTotalWeaponsCount(appState.activePool.weapons) === 0 && appState.uiState.status !== "Session complete! Auto-reset.") {
         resetApp();
     } else {
@@ -355,9 +342,29 @@ function saveState() {
 }
 
 // --- Dynamic Settings Rules ---
+
+// Fires ONLY when dropdown menus change
+function handleDropdownChange() {
+    appState.settings.rankId = document.getElementById("rankSelect").value;
+    appState.settings.scope = document.getElementById("scopeSelect").value;
+    appState.settings.order = document.getElementById("orderSelect").value;
+    
+    // Update what checkboxes are allowed/visible, remembering true user preference
+    enforceWeaponAvailability();
+    resetApp();
+}
+
+// Fires ONLY when a specific weapon checkbox is tapped
+function handleToggleChange(wpn) {
+    const el = document.getElementById(`wpn-${wpn}`);
+    appState.settings.weapons[wpn] = el.checked; // Update core preference
+    resetApp();
+}
+
 function enforceWeaponAvailability() {
     const avail = { nunchaku: false, bo: false, sai: false, tonfa: false };
     
+    // Figure out which weapons actually exist based on current rank/scope
     for (let rank of curriculum) {
         if (appState.settings.scope === "single" && rank.id !== appState.settings.rankId) continue;
         
@@ -369,47 +376,30 @@ function enforceWeaponAvailability() {
         if (appState.settings.scope === "cumulative" && rank.id === appState.settings.rankId) break;
     }
 
+    // Apply rules visually without destroying the core preference setting
     ['nunchaku', 'bo', 'sai', 'tonfa'].forEach(wpn => {
         const el = document.getElementById(`wpn-${wpn}`);
         const label = el.parentElement;
         
         if (!avail[wpn]) {
             el.disabled = true;
-            el.checked = false;
-            appState.settings.weapons[wpn] = false; 
+            el.checked = false; // Force unchecked visually
             label.style.opacity = '0.3';
         } else {
             el.disabled = false;
             label.style.opacity = '1';
-            el.checked = appState.settings.weapons[wpn]; 
+            el.checked = appState.settings.weapons[wpn]; // Restore to user's saved preference
         }
     });
-}
-
-function handleConfigChange() {
-    appState.settings.rankId = document.getElementById("rankSelect").value;
-    appState.settings.scope = document.getElementById("scopeSelect").value;
-    appState.settings.order = document.getElementById("orderSelect").value;
-    
-    appState.settings.weapons.nunchaku = document.getElementById("wpn-nunchaku").checked;
-    appState.settings.weapons.bo = document.getElementById("wpn-bo").checked;
-    appState.settings.weapons.sai = document.getElementById("wpn-sai").checked;
-    appState.settings.weapons.tonfa = document.getElementById("wpn-tonfa").checked;
-
-    enforceWeaponAvailability();
-    resetApp();
 }
 
 function selectAllWeapons() {
-    // Only turn on weapons that are actually available and not disabled
     ['nunchaku', 'bo', 'sai', 'tonfa'].forEach(wpn => {
-        const el = document.getElementById(`wpn-${wpn}`);
-        if (!el.disabled) {
-            el.checked = true;
-        }
+        appState.settings.weapons[wpn] = true; // Turn everything on in the background preference
     });
-    // Trigger the save and pool refresh
-    handleConfigChange();
+    
+    enforceWeaponAvailability(); // Sync UI so only the available ones check themselves visually
+    resetApp();
 }
 
 function compileTargetLists() {
@@ -421,6 +411,7 @@ function compileTargetLists() {
         
         targetOpen = targetOpen.concat(rank.openHand);
         
+        // Only pull katas if the user's preference for that weapon is TRUE
         if (appState.settings.weapons.nunchaku) targetWeapons.nunchaku = targetWeapons.nunchaku.concat(rank.weapons.nunchaku);
         if (appState.settings.weapons.bo) targetWeapons.bo = targetWeapons.bo.concat(rank.weapons.bo);
         if (appState.settings.weapons.sai) targetWeapons.sai = targetWeapons.sai.concat(rank.weapons.sai);
@@ -450,7 +441,7 @@ function getNextKata() {
         resetApp();
         appState.uiState.status = "Session complete! Auto-reset.";
         appState.uiState.kata = "Ready?";
-        appState.uiState.type = "Click Start Below";
+        appState.uiState.type = "Click Below to Begin";
         saveState();
         return;
     }
@@ -526,7 +517,7 @@ function resetApp() {
         sai: [...lists.weapons.sai], tonfa: [...lists.weapons.tonfa]
     };
     
-    appState.uiState = { nextTypeNeeded: "open", kata: "Ready?", type: "Click Start Below", status: "Fresh Start" };
+    appState.uiState = { nextTypeNeeded: "open", kata: "Ready?", type: "Click Below to Begin", status: "Fresh Start" };
     recalculateTotals();
     
     document.getElementById('scoring-card').style.display = 'none';
