@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kata Randomizer & Sequencer</title>
     <style>
-        /* --- Modern CSS Architecture & Core Colors --- */
+        /* --- Modern CSS Architecture --- */
         :root {
             --bg-primary: #121214;
             --bg-surface: #1e1e24;
@@ -18,244 +18,123 @@
             --transition: all 0.2s ease;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-primary);
             color: var(--text-main);
             line-height: 1.5;
-            padding-bottom: 85px; /* Protect content from overlapping bottom nav */
+            padding-bottom: 85px; 
         }
 
-        .app-container {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 16px;
-        }
+        .app-container { max-width: 480px; margin: 0 auto; padding: 16px; }
 
-        header {
-            text-align: center;
-            padding: 20px 0 10px 0;
-        }
-
-        header h1 {
-            color: var(--accent);
-            font-size: 1.6rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            line-height: 1.2;
-        }
-        
-        header p {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 4px;
-        }
+        header { text-align: center; padding: 20px 0 10px 0; }
+        header h1 { color: var(--accent); font-size: 1.6rem; text-transform: uppercase; letter-spacing: 1px; }
+        header p { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
         /* --- Panel Router Engine --- */
-        .view-panel {
-            display: none;
-        }
+        .view-panel { display: none; }
+        .view-panel.active { display: block; animation: viewFadeIn 0.2s ease-in-out; }
 
-        .view-panel.active {
-            display: block;
-            animation: viewFadeIn 0.2s ease-in-out;
-        }
-
-        /* --- Modular Component Styling --- */
+        /* --- Component Styling --- */
         .card {
             background-color: var(--bg-surface);
             border-radius: var(--border-radius);
-            padding: 20px;
-            margin-bottom: 16px;
+            padding: 20px; margin-bottom: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             border: 1px solid rgba(255, 255, 255, 0.03);
         }
 
-        .card-title {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            padding-bottom: 8px;
-            color: var(--text-muted);
-            font-weight: bold;
+        .card-header-flex {
+            display: flex; justify-content: space-between; align-items: baseline;
+            border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; padding-bottom: 8px;
         }
+
+        .card-title {
+            font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-muted); font-weight: bold;
+        }
+        
+        .card-title.standalone {
+            margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;
+        }
+
+        .btn-text {
+            background: none; border: none; color: var(--accent); font-size: 0.8rem;
+            text-transform: uppercase; font-weight: bold; cursor: pointer; letter-spacing: 1px; padding: 4px;
+        }
+        .btn-text:active { color: var(--accent-hover); }
 
         /* --- Display Engine Box --- */
         .display-box {
-            text-align: center;
-            padding: 45px 20px;
+            text-align: center; padding: 45px 20px;
             background: linear-gradient(145deg, var(--bg-surface), var(--bg-card));
-            min-height: 180px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            min-height: 180px; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
         }
+        .kata-name { font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 10px; line-height: 1.2; }
+        .kata-type { background-color: rgba(255, 71, 87, 0.15); color: var(--accent); padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
 
-        .kata-name {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--text-main);
-            margin-bottom: 10px;
-            line-height: 1.2;
-        }
-
-        .kata-type {
-            background-color: rgba(255, 71, 87, 0.15);
-            color: var(--accent);
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* --- Input Controls & Tap Targets --- */
+        /* --- Input Controls --- */
         .btn {
-            display: block;
-            width: 100%;
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            padding: 16px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: var(--transition);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 10px rgba(255, 71, 87, 0.25);
+            display: block; width: 100%; background-color: var(--accent); color: white;
+            border: none; border-radius: var(--border-radius); padding: 16px;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: var(--transition);
+            text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(255, 71, 87, 0.25);
         }
+        .btn:active { transform: scale(0.98); background-color: var(--accent-hover); }
 
-        .btn:active {
-            transform: scale(0.98);
-            background-color: var(--accent-hover);
-        }
+        .btn-secondary { background-color: var(--bg-card); color: var(--text-main); border: 1px solid rgba(255,255,255,0.08); padding: 12px; font-size: 0.95rem; box-shadow: none; margin-bottom: 10px; width: 100%; border-radius: var(--border-radius);}
+        .btn-secondary:active { background-color: rgba(255,255,255,0.05); }
 
-        .btn-secondary {
-            background-color: var(--bg-card);
-            color: var(--text-main);
-            border: 1px solid rgba(255,255,255,0.08);
-            padding: 12px;
-            font-size: 0.95rem;
-            box-shadow: none;
-        }
-        
-        .btn-secondary:active {
-            background-color: rgba(255,255,255,0.05);
-        }
+        /* Rating buttons group */
+        .rating-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+        .btn-rate { background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); color: var(--text-main); padding: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; }
+        .btn-rate:active { background-color: rgba(255,255,255,0.05); }
 
-        .form-group {
-            margin-bottom: 16px;
-        }
+        /* Forms & Toggles */
+        .form-group { margin-bottom: 16px; }
+        .form-group label.dropdown-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px; font-weight: bold; }
+        select { background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px; border-radius: 8px; font-size: 1rem; width: 100%; cursor: pointer; font-weight: 600; }
 
-        .form-group:last-child {
-            margin-bottom: 0;
+        .toggle-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
         }
+        .toggle-row:last-child { border-bottom: none; }
+        .toggle-row label { font-size: 1rem; color: var(--text-main); font-weight: normal; margin: 0; display: flex; align-items: center; width: 100%; cursor: pointer; justify-content: space-between; transition: opacity 0.2s ease; }
+        .toggle-row input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--accent); }
+        .toggle-row input[type="checkbox"]:disabled { cursor: not-allowed; }
 
-        label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: block;
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
+        /* --- Telemetry & History --- */
+        .telemetry-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.95rem; }
+        .telemetry-row:last-child { border-bottom: none; }
+        .telemetry-label { color: var(--text-muted); }
+        .highlight { color: var(--text-main); font-weight: bold; }
 
-        select {
-            background-color: var(--bg-card);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: white;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 1rem;
-            width: 100%;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        /* --- Telemetry Rows --- */
-        .telemetry-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-size: 0.95rem;
-        }
-
-        .telemetry-row:last-child {
-            border-bottom: none;
-        }
-
-        .telemetry-label {
-            color: var(--text-muted);
-        }
-
-        .highlight {
-            color: var(--text-main);
-            font-weight: bold;
-        }
+        .history-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+        .history-item { background-color: var(--bg-card); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--text-muted); font-size: 0.9rem;}
+        .history-item.rating-1 { border-left-color: #ff4757; } /* Fix */
+        .history-item.rating-3 { border-left-color: #ffa502; } /* OK */
+        .history-item.rating-5 { border-left-color: #2ed573; } /* Sharp */
 
         /* --- Tabbed Matrix Bottom Bar --- */
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--bg-surface);
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            border-top: 1px solid rgba(255,255,255,0.08);
-            z-index: 1000;
-            padding-bottom: env(safe-area-inset-bottom); /* iOS Gesture Safe Space */
+            position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-surface);
+            display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255,255,255,0.08);
+            z-index: 1000; padding-bottom: env(safe-area-inset-bottom); 
         }
-
         .nav-item {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            padding: 14px 0;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            background: none; border: none; color: var(--text-muted); padding: 14px 0;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column;
+            align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.5px;
         }
+        .nav-item.active { color: var(--accent); }
+        .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
 
-        .nav-item.active {
-            color: var(--accent);
-        }
-
-        .nav-item svg {
-            width: 22px;
-            height: 22px;
-            fill: currentColor;
-        }
-
-        @keyframes viewFadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes viewFadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -266,25 +145,29 @@
         <p>Rotator & Progress Engine</p>
     </header>
 
+    <!-- CORE PANEL 1: TRAINING HUB -->
     <main id="view-train" class="view-panel active">
         <div class="card display-box">
             <div id="kataDisplay" class="kata-name">Ready?</div>
             <span id="typeDisplay" class="kata-type">Click Start Below</span>
         </div>
-        <button class="btn" onclick="getNextKata()">Next Rotation</button>
+        
+        <div class="card" id="scoring-card" style="display: none;">
+            <div class="card-title standalone" style="text-align: center;">Log Performance</div>
+            <div class="rating-group">
+                <button class="btn-rate" onclick="logPerformance(1)">❌ Fix</button>
+                <button class="btn-rate" onclick="logPerformance(3)">⚠️ OK</button>
+                <button class="btn-rate" onclick="logPerformance(5)">💎 Sharp</button>
+            </div>
+        </div>
+
+        <button class="btn" id="roll-button" onclick="getNextKata()">Next Rotation</button>
     </main>
 
+    <!-- CORE PANEL 2: METRICS & HISTORY -->
     <section id="view-metrics" class="view-panel">
         <div class="card">
-            <div class="card-title">Live Tracking Parameters</div>
-            <div class="telemetry-row">
-                <span class="telemetry-label">Target Tier</span>
-                <span id="rankDisplay" class="highlight">-</span>
-            </div>
-            <div class="telemetry-row">
-                <span class="telemetry-label">Sequence Model</span>
-                <span id="orderDisplay" class="highlight">-</span>
-            </div>
+            <div class="card-title standalone">Live Tracking Parameters</div>
             <div class="telemetry-row">
                 <span class="telemetry-label">Open Hand Remaining</span>
                 <span id="openRemaining" class="highlight">0/0</span>
@@ -298,15 +181,21 @@
                 <span id="cycleStatus" class="highlight">Fresh Start</span>
             </div>
         </div>
+        
+        <div class="card">
+            <div class="card-title standalone">Session History</div>
+            <div class="history-list" id="history-log-container"></div>
+        </div>
+
         <button class="btn btn-secondary" onclick="resetApp()">Force Hard Reset & Re-shuffle</button>
     </section>
 
+    <!-- CORE PANEL 3: SETTINGS & DATA ADMIN -->
     <section id="view-settings" class="view-panel">
         <div class="card">
-            <div class="card-title">Curriculum Scope Customization</div>
-            
+            <div class="card-title standalone">Curriculum Scope</div>
             <div class="form-group">
-                <label for="rankSelect">Current Belt Rank</label>
+                <label class="dropdown-label" for="rankSelect">Current Belt Rank</label>
                 <select id="rankSelect" onchange="handleConfigChange()">
                     <option value="10">10th KYU White Belt</option>
                     <option value="8">8th KYU Yellow Belt</option>
@@ -324,7 +213,7 @@
             </div>
             
             <div class="form-group">
-                <label for="scopeSelect">Curriculum Scope</label>
+                <label class="dropdown-label" for="scopeSelect">Rank Scope</label>
                 <select id="scopeSelect" onchange="handleConfigChange()">
                     <option value="cumulative">Cumulative (Rank & Below)</option>
                     <option value="single">Current Rank Only</option>
@@ -332,16 +221,46 @@
             </div>
 
             <div class="form-group">
-                <label for="orderSelect">Training Order Strategy</label>
+                <label class="dropdown-label" for="orderSelect">Training Sequence</label>
                 <select id="orderSelect" onchange="handleConfigChange()">
                     <option value="random">Alternating & Shuffled</option>
-                    <option value="sequential">Sequential (Open -> Weapons Sequence)</option>
+                    <option value="sequential">Sequential (Open -> Weapons)</option>
                 </select>
             </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header-flex">
+                <div class="card-title" style="margin: 0; padding: 0; border: none;">Weapon Inclusion</div>
+                <button class="btn-text" onclick="selectAllWeapons()">Select All</button>
+            </div>
+            
+            <div class="toggle-row">
+                <label>Nunchaku <input type="checkbox" id="wpn-nunchaku" onchange="handleConfigChange()"></label>
+            </div>
+            <div class="toggle-row">
+                <label>Bo Staff <input type="checkbox" id="wpn-bo" onchange="handleConfigChange()"></label>
+            </div>
+            <div class="toggle-row">
+                <label>Sai <input type="checkbox" id="wpn-sai" onchange="handleConfigChange()"></label>
+            </div>
+            <div class="toggle-row">
+                <label>Tonfa <input type="checkbox" id="wpn-tonfa" onchange="handleConfigChange()"></label>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title standalone">Data Management</div>
+            <button class="btn btn-secondary" onclick="exportStateToFile()">Export Backup (JSON)</button>
+            <button class="btn btn-secondary" style="position: relative;">
+                Import Backup
+                <input type="file" onchange="importStateFromFile(event)" style="position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+            </button>
         </div>
     </section>
 </div>
 
+<!-- NAVIGATION LAYER -->
 <nav class="bottom-nav">
     <button class="nav-item active" id="nav-train" onclick="switchView('train')">
         <svg viewBox="0 0 24 24"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm1 10h3l-4-4-4 4h3v4h2v-4z"/></svg>
@@ -349,7 +268,7 @@
     </button>
     <button class="nav-item" id="nav-metrics" onclick="switchView('metrics')">
         <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
-        Telemetry
+        Data
     </button>
     <button class="nav-item" id="nav-settings" onclick="switchView('settings')">
         <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
@@ -358,225 +277,328 @@
 </nav>
 
 <script>
-// --- Core Application Curriculum Array Configuration ---
+// --- Curriculum Engine ---
 const curriculum = [
-    { id: "10", name: "10th KYU White Belt", openHand: ["Ni-Ju Shichi No Kata", "Kihon Kata Shodan"], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } },
-    { id: "8", name: "8th KYU Yellow Belt", openHand: ["Kihon Kata Nidan", "Kihon Kata Sandan"], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } },
-    { id: "7", name: "7th KYU Yellow Belt", openHand: ["Kihon Kata Yondan", "Zen Shin Kotai"], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } },
-    { id: "6", name: "6th KYU Blue Belt", openHand: ["Shihohai"], weapons: { nunchaku: ["Kihon Kata"], bo: [], sai: [], tonfa: [] } },
-    { id: "5", name: "5th KYU Blue Belt", openHand: ["Seisan"], weapons: { nunchaku: ["Kihon Kata Shodan"], bo: [], sai: [], tonfa: [] } },
-    { id: "4", name: "4th KYU Green Belt", openHand: [], weapons: { nunchaku: [], bo: ["Kihon Kata Shodan"], sai: [], tonfa: [] } },
-    { id: "3", name: "3rd KYU Green Belt", openHand: ["Niseishi"], weapons: { nunchaku: [], bo: ["Kihon Kata Nidan"], sai: ["Zen Shin Kotai"], tonfa: [] } },
-    { id: "2", name: "2nd KYU Brown Belt", openHand: ["Rho Hai Sho"], weapons: { nunchaku: [], bo: ["Kihon Kata Sandan"], sai: ["Shiho Hai"], tonfa: [] } },
-    { id: "1", name: "1st KYU Brown Belt", openHand: [], weapons: { nunchaku: ["Yoshu"], bo: [], sai: ["Rho Hai Sho"], tonfa: [] } },
-    { id: "b1", name: "1st Degree Black Belt", openHand: ["Rho Hai Dai", "Tenshin", "Mugen", "Bassai", "Chinto"], weapons: { nunchaku: [], bo: ["Shounnokon"], sai: ["Rho Hai Dai", "Mugen", "Bassai"], tonfa: [] } },
-    { id: "b2", name: "2nd Degree Black Belt", openHand: ["Sochin"], weapons: { nunchaku: ["Yoshu Dai"], bo: [], sai: ["Yosei No Sai"], tonfa: ["Tensho"] } },
-    { id: "b3", name: "3rd Degree Black Belt", openHand: ["San Shi Ryu"], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } }
+    { id: "10", openHand: ["Ni-Ju Shichi No Kata", "Kihon Kata Shodan"], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } },
+    { id: "8", openHand: ["Kihon Kata Nidan", "Kihon Kata Sandan"], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } },
+    { id: "7", openHand: ["Kihon Kata Yondan", "Zen Shin Kotai"], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } },
+    { id: "6", openHand: ["Shihohai"], weapons: { nunchaku: ["Kihon Kata"], bo: [], sai: [], tonfa: [] } },
+    { id: "5", openHand: ["Seisan"], weapons: { nunchaku: ["Kihon Kata Shodan"], bo: [], sai: [], tonfa: [] } },
+    { id: "4", openHand: [], weapons: { nunchaku: [], bo: ["Kihon Kata Shodan"], sai: [], tonfa: [] } },
+    { id: "3", openHand: ["Niseishi"], weapons: { nunchaku: [], bo: ["Kihon Kata Nidan"], sai: ["Zen Shin Kotai"], tonfa: [] } },
+    { id: "2", openHand: ["Rho Hai Sho"], weapons: { nunchaku: [], bo: ["Kihon Kata Sandan"], sai: ["Shiho Hai"], tonfa: [] } },
+    { id: "1", openHand: [], weapons: { nunchaku: ["Yoshu"], bo: [], sai: ["Rho Hai Sho"], tonfa: [] } },
+    { id: "b1", openHand: ["Rho Hai Dai", "Tenshin", "Mugen", "Bassai", "Chinto"], weapons: { nunchaku: [], bo: ["Shounnokon"], sai: ["Rho Hai Dai", "Mugen", "Bassai"], tonfa: [] } },
+    { id: "b2", openHand: ["Sochin"], weapons: { nunchaku: ["Yoshu Dai"], bo: [], sai: ["Yosei No Sai"], tonfa: ["Tensho"] } },
+    { id: "b3", openHand: ["San Shi Ryu"], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } }
 ];
 
+// --- Centralized App State ---
+const DEFAULT_STATE = {
+    settings: { 
+        rankId: "10", scope: "cumulative", order: "random",
+        weapons: { nunchaku: true, bo: true, sai: true, tonfa: true }
+    },
+    activePool: { openHand: [], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } },
+    uiState: { nextTypeNeeded: "open", kata: "Ready?", type: "Click Start Below", status: "Fresh Start" },
+    history: []
+};
+
+let appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
 let totalOpenHandCount = 0;
 let totalWeaponsCount = 0;
-let openHandPool = [];
-let weaponsPool = { nunchaku: [], bo: [], sai: [], tonfa: [] };
-let nextTypeNeeded = "open"; 
-let currentKataDisplay = "Ready?";
-let currentTypeDisplay = "Click Start Below";
-let currentStatusDisplay = "Fresh Start";
 
-/* --- Ergonomic View Presentation Switching Router --- */
-function switchView(targetViewId) {
-    document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+// --- Core Initialization & Storage ---
+function initApp() {
+    const saved = localStorage.getItem('yoshukai_app_state');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            appState.settings = { ...DEFAULT_STATE.settings, ...parsed.settings };
+            appState.settings.weapons = { ...DEFAULT_STATE.settings.weapons, ...parsed.settings.weapons };
+            appState.activePool = parsed.activePool || DEFAULT_STATE.activePool;
+            appState.uiState = parsed.uiState || DEFAULT_STATE.uiState;
+            appState.history = parsed.history || [];
+            
+            // Sync dropdowns
+            document.getElementById("rankSelect").value = appState.settings.rankId;
+            document.getElementById("scopeSelect").value = appState.settings.scope;
+            document.getElementById("orderSelect").value = appState.settings.order;
+            
+            // Apply toggles before enforcing logic
+            document.getElementById("wpn-nunchaku").checked = appState.settings.weapons.nunchaku;
+            document.getElementById("wpn-bo").checked = appState.settings.weapons.bo;
+            document.getElementById("wpn-sai").checked = appState.settings.weapons.sai;
+            document.getElementById("wpn-tonfa").checked = appState.settings.weapons.tonfa;
+
+        } catch(e) { console.error("Storage error, resetting"); }
+    } else {
+        document.getElementById("wpn-nunchaku").checked = appState.settings.weapons.nunchaku;
+        document.getElementById("wpn-bo").checked = appState.settings.weapons.bo;
+        document.getElementById("wpn-sai").checked = appState.settings.weapons.sai;
+        document.getElementById("wpn-tonfa").checked = appState.settings.weapons.tonfa;
+    }
     
-    document.getElementById(`view-${targetViewId}`).classList.add('active');
-    document.getElementById(`nav-${targetViewId}`).classList.add('active');
+    enforceWeaponAvailability();
+    recalculateTotals();
+    
+    if (appState.activePool.openHand.length === 0 && getTotalWeaponsCount(appState.activePool.weapons) === 0 && appState.uiState.status !== "Session complete! Auto-reset.") {
+        resetApp();
+    } else {
+        renderUI();
+    }
 }
 
-function getUIValues() {
-    return {
-        rankId: document.getElementById("rankSelect").value,
-        scope: document.getElementById("scopeSelect").value,
-        order: document.getElementById("orderSelect").value
-    };
+function saveState() {
+    localStorage.setItem('yoshukai_app_state', JSON.stringify(appState));
+    renderUI();
 }
 
-function getTotalWeaponsCount(pool) {
-    return pool.nunchaku.length + pool.bo.length + pool.sai.length + pool.tonfa.length;
+// --- Dynamic Settings Rules ---
+function enforceWeaponAvailability() {
+    const avail = { nunchaku: false, bo: false, sai: false, tonfa: false };
+    
+    for (let rank of curriculum) {
+        if (appState.settings.scope === "single" && rank.id !== appState.settings.rankId) continue;
+        
+        if (rank.weapons.nunchaku.length > 0) avail.nunchaku = true;
+        if (rank.weapons.bo.length > 0) avail.bo = true;
+        if (rank.weapons.sai.length > 0) avail.sai = true;
+        if (rank.weapons.tonfa.length > 0) avail.tonfa = true;
+
+        if (appState.settings.scope === "cumulative" && rank.id === appState.settings.rankId) break;
+    }
+
+    ['nunchaku', 'bo', 'sai', 'tonfa'].forEach(wpn => {
+        const el = document.getElementById(`wpn-${wpn}`);
+        const label = el.parentElement;
+        
+        if (!avail[wpn]) {
+            el.disabled = true;
+            el.checked = false;
+            appState.settings.weapons[wpn] = false; 
+            label.style.opacity = '0.3';
+        } else {
+            el.disabled = false;
+            label.style.opacity = '1';
+            el.checked = appState.settings.weapons[wpn]; 
+        }
+    });
+}
+
+function handleConfigChange() {
+    appState.settings.rankId = document.getElementById("rankSelect").value;
+    appState.settings.scope = document.getElementById("scopeSelect").value;
+    appState.settings.order = document.getElementById("orderSelect").value;
+    
+    appState.settings.weapons.nunchaku = document.getElementById("wpn-nunchaku").checked;
+    appState.settings.weapons.bo = document.getElementById("wpn-bo").checked;
+    appState.settings.weapons.sai = document.getElementById("wpn-sai").checked;
+    appState.settings.weapons.tonfa = document.getElementById("wpn-tonfa").checked;
+
+    enforceWeaponAvailability();
+    resetApp();
+}
+
+function selectAllWeapons() {
+    // Only turn on weapons that are actually available and not disabled
+    ['nunchaku', 'bo', 'sai', 'tonfa'].forEach(wpn => {
+        const el = document.getElementById(`wpn-${wpn}`);
+        if (!el.disabled) {
+            el.checked = true;
+        }
+    });
+    // Trigger the save and pool refresh
+    handleConfigChange();
 }
 
 function compileTargetLists() {
-    const config = getUIValues();
     let targetOpen = [];
     let targetWeapons = { nunchaku: [], bo: [], sai: [], tonfa: [] };
     
     for (let rank of curriculum) {
-        if (config.scope === "single" && rank.id !== config.rankId) continue;
+        if (appState.settings.scope === "single" && rank.id !== appState.settings.rankId) continue;
         
         targetOpen = targetOpen.concat(rank.openHand);
-        targetWeapons.nunchaku = targetWeapons.nunchaku.concat(rank.weapons.nunchaku);
-        targetWeapons.bo = targetWeapons.bo.concat(rank.weapons.bo);
-        targetWeapons.sai = targetWeapons.sai.concat(rank.weapons.sai);
-        targetWeapons.tonfa = targetWeapons.tonfa.concat(rank.weapons.tonfa);
         
-        if (config.scope === "cumulative" && rank.id === config.rankId) break;
+        if (appState.settings.weapons.nunchaku) targetWeapons.nunchaku = targetWeapons.nunchaku.concat(rank.weapons.nunchaku);
+        if (appState.settings.weapons.bo) targetWeapons.bo = targetWeapons.bo.concat(rank.weapons.bo);
+        if (appState.settings.weapons.sai) targetWeapons.sai = targetWeapons.sai.concat(rank.weapons.sai);
+        if (appState.settings.weapons.tonfa) targetWeapons.tonfa = targetWeapons.tonfa.concat(rank.weapons.tonfa);
+        
+        if (appState.settings.scope === "cumulative" && rank.id === appState.settings.rankId) break;
     }
     return { open: targetOpen, weapons: targetWeapons };
 }
 
-function saveToStorage() {
-    const config = getUIValues();
-    localStorage.setItem('v2_rankId', config.rankId);
-    localStorage.setItem('v2_scope', config.scope);
-    localStorage.setItem('v2_order', config.order);
-    localStorage.setItem('v2_openHandPool', JSON.stringify(openHandPool));
-    localStorage.setItem('v2_weaponsPool', JSON.stringify(weaponsPool));
-    localStorage.setItem('v2_nextTypeNeeded', nextTypeNeeded);
-    localStorage.setItem('v2_currentKataDisplay', currentKataDisplay);
-    localStorage.setItem('v2_currentTypeDisplay', currentTypeDisplay);
-    localStorage.setItem('v2_currentStatusDisplay', currentStatusDisplay);
+// --- Engine & UI Helpers ---
+function getTotalWeaponsCount(pool) {
+    return pool.nunchaku.length + pool.bo.length + pool.sai.length + pool.tonfa.length;
 }
 
-function loadFromStorage() {
-    if (localStorage.getItem('v2_rankId')) document.getElementById("rankSelect").value = localStorage.getItem('v2_rankId');
-    if (localStorage.getItem('v2_scope')) document.getElementById("scopeSelect").value = localStorage.getItem('v2_scope');
-    if (localStorage.getItem('v2_order')) document.getElementById("orderSelect").value = localStorage.getItem('v2_order');
-    
-    const masters = compileTargetLists();
-    totalOpenHandCount = masters.open.length;
-    totalWeaponsCount = getTotalWeaponsCount(masters.weapons);
-
-    const savedOpen = localStorage.getItem('v2_openHandPool');
-    const savedWeapons = localStorage.getItem('v2_weaponsPool');
-    
-    if (savedOpen && savedWeapons) {
-        openHandPool = JSON.parse(savedOpen);
-        weaponsPool = JSON.parse(savedWeapons);
-        nextTypeNeeded = localStorage.getItem('v2_nextTypeNeeded') || "open";
-        currentKataDisplay = localStorage.getItem('v2_currentKataDisplay') || "Ready?";
-        currentTypeDisplay = localStorage.getItem('v2_currentTypeDisplay') || "Click Start Below";
-        currentStatusDisplay = localStorage.getItem('v2_currentStatusDisplay') || "In Progress";
-        
-        updateUI(currentKataDisplay, currentTypeDisplay, currentStatusDisplay);
-    } else {
-        resetApp();
-    }
-}
-
-function handleConfigChange() {
-    const masters = compileTargetLists();
-    totalOpenHandCount = masters.open.length;
-    totalWeaponsCount = getTotalWeaponsCount(masters.weapons);
-    resetApp();
+function recalculateTotals() {
+    const lists = compileTargetLists();
+    totalOpenHandCount = lists.open.length;
+    totalWeaponsCount = getTotalWeaponsCount(lists.weapons);
 }
 
 function getNextKata() {
-    const weaponsLeft = getTotalWeaponsCount(weaponsPool);
-    const config = getUIValues();
+    const pool = appState.activePool;
+    const weaponsLeft = getTotalWeaponsCount(pool.weapons);
     
-    if (openHandPool.length === 0 && weaponsLeft === 0) {
+    if (pool.openHand.length === 0 && weaponsLeft === 0) {
         resetApp();
-        currentStatusDisplay = "Session complete! Auto-reset.";
-        updateUI("Ready?", "Click Start Below", currentStatusDisplay);
-        saveToStorage();
+        appState.uiState.status = "Session complete! Auto-reset.";
+        appState.uiState.kata = "Ready?";
+        appState.uiState.type = "Click Start Below";
+        saveState();
         return;
     }
 
     let selectedKata = "";
     let currentType = "";
 
-    if (config.order === "sequential") {
-        if (openHandPool.length > 0) {
-            selectedKata = openHandPool.shift();
-            currentType = "Open Hand";
-        } else if (weaponsPool.nunchaku.length > 0) {
-            selectedKata = weaponsPool.nunchaku.shift();
-            currentType = "Nunchaku";
-        } else if (weaponsPool.bo.length > 0) {
-            selectedKata = weaponsPool.bo.shift();
-            currentType = "Bo";
-        } else if (weaponsPool.sai.length > 0) {
-            selectedKata = weaponsPool.sai.shift();
-            currentType = "Sai";
-        } else if (weaponsPool.tonfa.length > 0) {
-            selectedKata = weaponsPool.tonfa.shift();
-            currentType = "Tonfa";
-        }
+    if (appState.settings.order === "sequential") {
+        if (pool.openHand.length > 0) { selectedKata = pool.openHand.shift(); currentType = "Open Hand"; }
+        else if (pool.weapons.nunchaku.length > 0) { selectedKata = pool.weapons.nunchaku.shift(); currentType = "Nunchaku"; }
+        else if (pool.weapons.bo.length > 0) { selectedKata = pool.weapons.bo.shift(); currentType = "Bo"; }
+        else if (pool.weapons.sai.length > 0) { selectedKata = pool.weapons.sai.shift(); currentType = "Sai"; }
+        else if (pool.weapons.tonfa.length > 0) { selectedKata = pool.weapons.tonfa.shift(); currentType = "Tonfa"; }
     } else {
-        if (nextTypeNeeded === "open" && openHandPool.length === 0) nextTypeNeeded = "weapon";
-        if (nextTypeNeeded === "weapon" && weaponsLeft === 0) nextTypeNeeded = "open";
+        if (appState.uiState.nextTypeNeeded === "open" && pool.openHand.length === 0) appState.uiState.nextTypeNeeded = "weapon";
+        if (appState.uiState.nextTypeNeeded === "weapon" && weaponsLeft === 0) appState.uiState.nextTypeNeeded = "open";
 
-        if (nextTypeNeeded === "open") {
-            let index = Math.floor(Math.random() * openHandPool.length);
-            selectedKata = openHandPool.splice(index, 1)[0];
+        if (appState.uiState.nextTypeNeeded === "open") {
+            let index = Math.floor(Math.random() * pool.openHand.length);
+            selectedKata = pool.openHand.splice(index, 1)[0];
             currentType = "Open Hand";
-            nextTypeNeeded = "weapon"; 
+            appState.uiState.nextTypeNeeded = "weapon"; 
         } else {
-            let availableWeaponTypes = [];
-            if (weaponsPool.nunchaku.length > 0) availableWeaponTypes.push("nunchaku");
-            if (weaponsPool.bo.length > 0) availableWeaponTypes.push("bo");
-            if (weaponsPool.sai.length > 0) availableWeaponTypes.push("sai");
-            if (weaponsPool.tonfa.length > 0) availableWeaponTypes.push("tonfa");
+            let avail = [];
+            if (pool.weapons.nunchaku.length > 0) avail.push("nunchaku");
+            if (pool.weapons.bo.length > 0) avail.push("bo");
+            if (pool.weapons.sai.length > 0) avail.push("sai");
+            if (pool.weapons.tonfa.length > 0) avail.push("tonfa");
 
-            let randomWeaponType = availableWeaponTypes[Math.floor(Math.random() * availableWeaponTypes.length)];
-            let targetPool = weaponsPool[randomWeaponType];
+            let randType = avail[Math.floor(Math.random() * avail.length)];
+            let targetPool = pool.weapons[randType];
             
             let index = Math.floor(Math.random() * targetPool.length);
             selectedKata = targetPool.splice(index, 1)[0];
             
-            currentType = randomWeaponType.charAt(0).toUpperCase() + randomWeaponType.slice(1);
-            nextTypeNeeded = "open";
+            currentType = randType.charAt(0).toUpperCase() + randType.slice(1);
+            appState.uiState.nextTypeNeeded = "open";
         }
     }
 
-    currentKataDisplay = selectedKata;
-    currentTypeDisplay = currentType;
-    currentStatusDisplay = "In Progress";
+    appState.uiState.kata = selectedKata;
+    appState.uiState.type = currentType;
+    appState.uiState.status = "In Progress";
 
-    updateUI(selectedKata, currentType, currentStatusDisplay);
-    saveToStorage();
+    document.getElementById('scoring-card').style.display = 'block';
+    document.getElementById('roll-button').style.display = 'none';
+
+    saveState();
+}
+
+function logPerformance(rating) {
+    const entry = {
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        kataName: appState.uiState.kata,
+        type: appState.uiState.type,
+        rating: rating
+    };
+    
+    appState.history.unshift(entry); 
+    
+    document.getElementById('scoring-card').style.display = 'none';
+    document.getElementById('roll-button').style.display = 'block';
+    
+    saveState();
 }
 
 function resetApp() {
     const lists = compileTargetLists();
-    
-    openHandPool = [...lists.open];
-    weaponsPool = {
-        nunchaku: [...lists.weapons.nunchaku],
-        bo: [...lists.weapons.bo],
-        sai: [...lists.weapons.sai],
-        tonfa: [...lists.weapons.tonfa]
+    appState.activePool.openHand = [...lists.open];
+    appState.activePool.weapons = {
+        nunchaku: [...lists.weapons.nunchaku], bo: [...lists.weapons.bo],
+        sai: [...lists.weapons.sai], tonfa: [...lists.weapons.tonfa]
     };
     
-    nextTypeNeeded = "open";
-    currentKataDisplay = "Ready?";
-    currentTypeDisplay = "Click Start Below";
-    currentStatusDisplay = "Fresh Start";
+    appState.uiState = { nextTypeNeeded: "open", kata: "Ready?", type: "Click Start Below", status: "Fresh Start" };
+    recalculateTotals();
     
-    updateUI(currentKataDisplay, currentTypeDisplay, currentStatusDisplay);
-    saveToStorage();
+    document.getElementById('scoring-card').style.display = 'none';
+    document.getElementById('roll-button').style.display = 'block';
+    
+    saveState();
 }
 
-function updateUI(kataText, typeText, statusText) {
-    const weaponsLeft = getTotalWeaponsCount(weaponsPool);
-    const config = getUIValues();
-    
-    const rankMenu = document.getElementById("rankSelect");
-    const selectedRankName = rankMenu.options[rankMenu.selectedIndex].text;
-    const scopeLabel = config.scope === "single" ? " (Only)" : " (Cumulative)";
+function renderUI() {
+    const ui = appState.uiState;
+    const pool = appState.activePool;
+    const weaponsLeft = getTotalWeaponsCount(pool.weapons);
 
-    document.getElementById("kataDisplay").innerText = kataText;
-    document.getElementById("typeDisplay").innerText = typeText;
-    document.getElementById("rankDisplay").innerText = selectedRankName + scopeLabel;
+    document.getElementById("kataDisplay").innerText = ui.kata;
+    document.getElementById("typeDisplay").innerText = ui.type;
     
-    const orderMenu = document.getElementById("orderSelect");
-    document.getElementById("orderDisplay").innerText = orderMenu.options[orderMenu.selectedIndex].text;
-    
-    document.getElementById("openRemaining").innerText = `${openHandPool.length}/${totalOpenHandCount}`;
+    document.getElementById("openRemaining").innerText = `${pool.openHand.length}/${totalOpenHandCount}`;
     document.getElementById("weaponsRemaining").innerText = `${weaponsLeft}/${totalWeaponsCount}`;
-    document.getElementById("cycleStatus").innerText = statusText;
+    document.getElementById("cycleStatus").innerText = ui.status;
+
+    const historyContainer = document.getElementById('history-log-container');
+    if (appState.history.length === 0) {
+        historyContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 10px;">No forms logged yet.</div>`;
+    } else {
+        historyContainer.innerHTML = appState.history.map(item => {
+            const dateStr = new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="history-item rating-${item.rating}">
+                    <div>
+                        <strong>${item.kataName}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">${item.type}</div>
+                    </div>
+                    <span>${dateStr}</span>
+                </div>
+            `;
+        }).join('');
+    }
 }
 
-window.onload = loadFromStorage;
+function switchView(targetViewId) {
+    document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    document.getElementById(`view-${targetViewId}`).classList.add('active');
+    document.getElementById(`nav-${targetViewId}`).classList.add('active');
+}
+
+function exportStateToFile() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+    const a = document.createElement('a');
+    a.href = dataStr;
+    a.download = `yoshukai_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+function importStateFromFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            appState = JSON.parse(e.target.result);
+            saveState();
+            initApp();
+            alert("Backup Restored Successfully!");
+        } catch (err) { alert("Invalid backup file."); }
+    };
+    reader.readAsText(file);
+}
+
+window.onload = initApp;
 </script>
 
 </body>
