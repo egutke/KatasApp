@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kata Randomizer & Sequencer</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ff4757">
+
     <style>
         /* --- Modern CSS Architecture --- */
         :root {
@@ -32,7 +36,7 @@
         .app-container { max-width: 480px; margin: 0 auto; padding: 16px; }
 
         header { text-align: center; padding: 20px 0 10px 0; }
-	header h1 { color: var(--accent); font-size: 4rem; font-weight: bold; letter-spacing: 4px; margin-bottom: 5px; }
+        header h1 { color: var(--accent); font-size: 4rem; font-weight: bold; letter-spacing: 4px; margin-bottom: 5px; }
         header p { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
         /* --- Panel Router Engine --- */
@@ -181,6 +185,8 @@
         </div>
 
         <button class="btn" id="roll-button" onclick="getNextKata()">Hajime!</button>
+        
+        <div class="version-text app-version-display"></div>
     </main>
 
     <section id="view-metrics" class="view-panel">
@@ -206,6 +212,8 @@
         </div>
 
         <button class="btn btn-secondary" onclick="resetApp()">Force Hard Reset & Re-shuffle</button>
+        
+        <div class="version-text app-version-display"></div>
     </section>
 
     <section id="view-settings" class="view-panel">
@@ -275,7 +283,7 @@
             </button>
         </div>
         
-        <div class="version-text">App Version 1.20</div>
+        <div class="version-text app-version-display"></div>
     </section>
 </div>
 
@@ -295,6 +303,18 @@
 </nav>
 
 <script>
+// --- Service Worker Registration ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(registration => console.log('ServiceWorker registered'))
+            .catch(error => console.log('ServiceWorker failed: ', error));
+    });
+}
+
+// --- App Constants ---
+const APP_VERSION = "1.12";
+
 // --- Curriculum Engine ---
 const curriculum = [
     { id: "10", openHand: ["Ni-Ju Shichi No Kata", "Kihon Kata Shodan"], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } },
@@ -353,6 +373,11 @@ let pendingRating = null;
 
 // --- Core Initialization & Storage ---
 function initApp() {
+    // Inject the version number into all pages
+    document.querySelectorAll('.app-version-display').forEach(el => {
+        el.innerText = `App Version ${APP_VERSION}`;
+    });
+
     const saved = localStorage.getItem('yoshukai_app_state');
     let isFirstVisit = false; 
 
