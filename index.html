@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kata Randomizer & Sequencer</title>
     
+    <!-- PWA Links -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ff4757">
+    <meta name="theme-color" content="#121214">
+
+    <!-- Apple iOS Specific Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Yoshukai">
@@ -135,24 +138,10 @@
         .history-item.rating-3 { border-left-color: #ffa502; }
         .history-item.rating-5 { border-left-color: #2ed573; }
 
-        /* --- Tabbed Matrix Bottom Bar --- */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-surface);
-            display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255,255,255,0.08);
-            z-index: 1000; padding-bottom: env(safe-area-inset-bottom); 
-        }
-        .nav-item {
-            background: none; border: none; color: var(--text-muted); padding: 14px 0;
-            font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column;
-            align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .nav-item.active { color: var(--accent); }
-        .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
-
         /* --- iOS Install Banner --- */
         .ios-install-banner {
             position: fixed;
-            bottom: 80px; /* Sits exactly above the bottom navigation bar */
+            bottom: 80px; 
             left: 16px;
             right: 16px;
             background-color: var(--bg-card);
@@ -175,7 +164,21 @@
             font-size: 1.2rem; cursor: pointer; padding: 0 0 0 12px; line-height: 1;
         }
         .ios-install-close:active { color: var(--accent); }
-        
+
+        /* --- Tabbed Matrix Bottom Bar --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-surface);
+            display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255,255,255,0.08);
+            z-index: 1000; padding-bottom: env(safe-area-inset-bottom); 
+        }
+        .nav-item {
+            background: none; border: none; color: var(--text-muted); padding: 14px 0;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column;
+            align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .nav-item.active { color: var(--accent); }
+        .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
+
         /* --- App Version Text --- */
         .version-text {
             text-align: center;
@@ -248,6 +251,10 @@
     </section>
 
     <section id="view-settings" class="view-panel">
+        <button class="btn" id="install-pwa-btn" onclick="installPWA()" style="display: none; background-color: #2ed573; margin-bottom: 16px;">
+            📥 Install App to Phone
+        </button>
+
         <div class="card">
             <div class="card-title standalone">Curriculum Scope</div>
             <div class="form-group">
@@ -317,7 +324,8 @@
         <div class="version-text app-version-display"></div>
     </section>
 </div>
-    
+
+<!-- iOS Install Banner -->
 <div id="ios-install-banner" class="ios-install-banner" style="display: none;">
     <div class="ios-install-content">
         <strong>Install App on iPhone</strong>
@@ -329,7 +337,7 @@
     </div>
     <button class="ios-install-close" onclick="dismissIosBanner()">✕</button>
 </div>
-    
+
 <nav class="bottom-nav">
     <button class="nav-item active" id="nav-train" onclick="switchView('train')">
         <svg viewBox="0 0 24 24"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm1 10h3l-4-4-4 4h3v4h2v-4z"/></svg>
@@ -355,8 +363,37 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// --- Custom PWA Install Button ---
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the default mini-infobar from appearing
+    e.preventDefault();
+    // Stash the event so it can be triggered later
+    deferredPrompt = e;
+    // Unhide our custom install button
+    const installBtn = document.getElementById('install-pwa-btn');
+    if (installBtn) installBtn.style.display = 'block';
+});
+
+function installPWA() {
+    if (!deferredPrompt) return;
+    
+    // Show the native Chrome install prompt
+    deferredPrompt.prompt();
+    
+    // Wait for the user to respond
+    deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            // Hide the button if they successfully installed it
+            document.getElementById('install-pwa-btn').style.display = 'none';
+        }
+        deferredPrompt = null;
+    });
+}
+
 // --- App Constants ---
-const APP_VERSION = "1.54";
+const APP_VERSION = "1.14";
 
 // --- Curriculum Engine ---
 const curriculum = [
@@ -413,32 +450,7 @@ let appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
 let totalOpenHandCount = 0;
 let totalWeaponsCount = 0;
 let pendingRating = null;
-    
-// --- iOS Install Detection ---
-function checkIosInstall() {
-    // 1. If they previously dismissed it, exit immediately.
-    if (localStorage.getItem('yoshukai_ios_dismissed')) return;
 
-    // 2. Check if the device is iOS
-    const isIos = () => {
-        const userAgent = window.navigator.userAgent.toLowerCase();
-        return /iphone|ipad|ipod/.test(userAgent);
-    };
-
-    // 3. Check if the app is already running in standalone (installed) mode
-    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-
-    // If it's an iOS device AND it is NOT installed, show the banner
-    if (isIos() && !isStandalone) {
-        document.getElementById('ios-install-banner').style.display = 'flex';
-    }
-}
-
-function dismissIosBanner() {
-    document.getElementById('ios-install-banner').style.display = 'none';
-    localStorage.setItem('yoshukai_ios_dismissed', 'true');
-}
-    
 // --- Core Initialization & Storage ---
 function initApp() {
     // Inject the version number into all pages
@@ -489,6 +501,9 @@ function initApp() {
     if (isFirstVisit) {
         switchView('settings');
     }
+    
+    // Run the iOS check
+    checkIosInstall();
 }
 
 function saveState() {
@@ -746,6 +761,31 @@ function switchView(targetViewId) {
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     document.getElementById(`view-${targetViewId}`).classList.add('active');
     document.getElementById(`nav-${targetViewId}`).classList.add('active');
+}
+
+// --- iOS Install Detection ---
+function checkIosInstall() {
+    // 1. If they previously dismissed it, exit immediately.
+    if (localStorage.getItem('yoshukai_ios_dismissed')) return;
+
+    // 2. Check if the device is iOS
+    const isIos = () => {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        return /iphone|ipad|ipod/.test(userAgent);
+    };
+
+    // 3. Check if the app is already running in standalone (installed) mode
+    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+    // If it's an iOS device AND it is NOT installed, show the banner
+    if (isIos() && !isStandalone) {
+        document.getElementById('ios-install-banner').style.display = 'flex';
+    }
+}
+
+function dismissIosBanner() {
+    document.getElementById('ios-install-banner').style.display = 'none';
+    localStorage.setItem('yoshukai_ios_dismissed', 'true');
 }
 
 function exportStateToFile() {
