@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yoshukai-app-v1.53';
+const CACHE_NAME = 'yoshukai-app-v1.54';
 const ASSETS_TO_CACHE = [
   './index.html',
   './manifest.json',
