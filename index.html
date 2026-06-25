@@ -26,12 +26,13 @@
             color: var(--text-main);
             line-height: 1.5;
             padding-bottom: 85px; 
+            transition: background-color 0.5s ease;
         }
 
         .app-container { max-width: 480px; margin: 0 auto; padding: 16px; }
 
         header { text-align: center; padding: 20px 0 10px 0; }
-        header h1 { color: var(--accent); font-size: 1.6rem; text-transform: uppercase; letter-spacing: 1px; }
+	header h1 { color: var(--accent); font-size: 4rem; font-weight: bold; letter-spacing: 4px; margin-bottom: 5px; }
         header p { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
         /* --- Panel Router Engine --- */
@@ -159,7 +160,7 @@
 
 <div class="app-container">
     <header>
-        <h1>Yoshukai Dojo</h1>
+        <h1>養秀会</h1>
         <p>Strive for Excellence!</p>
     </header>
 
@@ -274,7 +275,7 @@
             </button>
         </div>
         
-        <div class="version-text">App Version 1.12</div>
+        <div class="version-text">App Version 1.20</div>
     </section>
 </div>
 
@@ -309,6 +310,30 @@ const curriculum = [
     { id: "b2", openHand: ["Sochin"], weapons: { nunchaku: ["Yoshu Dai"], bo: [], sai: ["Yosei No Sai"], tonfa: ["Tensho"] } },
     { id: "b3", openHand: ["San Shi Ryu"], weapons: { nunchaku: [], bo: [], sai: [], tonfa: [] } }
 ];
+
+// --- Theme Engine ---
+function updateBeltTheme(rankId) {
+    const root = document.documentElement;
+    let themeColor = "#121214"; // Default Black
+
+    // Using rich, dark tones to maintain readability and the dark mode aesthetic
+    switch(rankId) {
+        case "10": themeColor = "#2c3036"; break; // White Belt (Dark Slate)
+        case "8": 
+        case "7": themeColor = "#423b12"; break;  // Yellow Belt (Dark Gold)
+        case "6": 
+        case "5": themeColor = "#132745"; break;  // Blue Belt (Navy)
+        case "4": 
+        case "3": themeColor = "#123b1d"; break;  // Green Belt (Forest)
+        case "2": 
+        case "1": themeColor = "#3b2210"; break;  // Brown Belt (Deep Cocoa)
+        case "b1": 
+        case "b2": 
+        case "b3": themeColor = "#000000"; break; // Black Belt (Pitch Black)
+    }
+    
+    root.style.setProperty('--bg-primary', themeColor);
+}
 
 // --- Centralized App State ---
 const DEFAULT_STATE = {
@@ -364,6 +389,9 @@ function initApp() {
         renderUI();
     }
 
+    // Apply the saved belt color theme
+    updateBeltTheme(appState.settings.rankId);
+
     // Intercept the default view and route to Settings for new users
     if (isFirstVisit) {
         switchView('settings');
@@ -382,6 +410,9 @@ function handleDropdownChange() {
     appState.settings.rankId = document.getElementById("rankSelect").value;
     appState.settings.scope = document.getElementById("scopeSelect").value;
     appState.settings.order = document.getElementById("orderSelect").value;
+    
+    // Update background color based on new rank
+    updateBeltTheme(appState.settings.rankId);
     
     // Update what checkboxes are allowed/visible, remembering true user preference
     enforceWeaponAvailability();
